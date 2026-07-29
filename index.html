@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Matemáticas Jugando · IES Santa Engracia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f7f2e7;
+  --paper-line:#cfe0e8;
+  --margin-red:#e2857a;
+  --ink:#1f3a5f;
+  --ink-soft:#4a6382;
+  --coral:#e85d4c;
+  --coral-dark:#c8442f;
+  --correct:#4c9a6a;
+  --correct-dark:#357a4d;
+  --wrong:#d1483f;
+  --card:#fffdf7;
+  --shadow: 0 6px 0 rgba(31,58,95,0.12);
+  --app-height: 100%;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{
+  font-family:'Nunito',sans-serif;
+  background:
+    repeating-linear-gradient(to bottom, transparent, transparent 35px, var(--paper-line) 36px),
+    var(--paper);
+  min-height:var(--app-height,100vh);
+  color:var(--ink);
+  overflow-x:hidden;
+  position:relative;
+}
+body::before{
+  content:"";
+  position:fixed; top:0; bottom:0; left:38px; width:2px;
+  background:var(--margin-red); opacity:.55; z-index:0;
+  pointer-events:none;
+}
+h1,h2,h3,.hand{font-family:'Caveat',cursive; font-weight:700;}
+.screen{
+  min-height:100vh; min-height:var(--app-height,100vh);
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+  padding:24px 20px 40px; position:relative; z-index:1;
+}
+.screen.active{display:flex;}
+.card{
+  background:var(--card); border-radius:18px; box-shadow:var(--shadow);
+  border:2px solid rgba(31,58,95,0.08);
+  padding:32px 28px; max-width:480px; width:100%;
+}
+.title-hero{font-size:3.2rem; line-height:1; color:var(--coral); text-align:center; margin:0 0 4px;}
+.subtitle{color:var(--ink-soft); text-align:center; margin:0 0 24px; font-weight:600;}
+input[type=text]{
+  width:100%; padding:14px 16px; border-radius:12px; border:2px solid #d8cdb8;
+  font-family:'Nunito',sans-serif; font-size:1.05rem; margin-bottom:16px; background:#fffef9;
+}
+input[type=text]:focus{outline:none; border-color:var(--coral);}
+select{
+  width:100%; padding:12px 14px; border-radius:12px; border:2px solid #d8cdb8;
+  font-family:'Nunito',sans-serif; font-size:1rem; font-weight:700; background:#fffef9; color:var(--ink);
+}
+select:focus{outline:none; border-color:var(--coral);}
+button{
+  font-family:'Nunito',sans-serif; font-weight:800; cursor:pointer; border:none;
+  border-radius:12px; transition:transform .08s ease, box-shadow .08s ease;
+}
+button:active{transform:translateY(2px);}
+.btn-primary{
+  width:100%; padding:15px; font-size:1.1rem; color:#fff; background:var(--coral);
+  box-shadow:0 5px 0 var(--coral-dark);
+}
+.btn-primary:active{box-shadow:0 2px 0 var(--coral-dark);}
+.btn-primary:disabled{background:#c9c2b0; box-shadow:0 5px 0 #a89f89; cursor:not-allowed;}
+.btn-ghost{
+  background:transparent; color:var(--ink-soft); font-weight:700; padding:10px 14px; font-size:.95rem;
+  text-decoration:underline; text-underline-offset:3px;
+}
+.topbar{
+  position:fixed; top:0; left:0; right:0; display:flex; justify-content:space-between;
+  align-items:center; padding:14px 18px; z-index:5; pointer-events:none;
+}
+.topbar > *{pointer-events:auto;}
+.pill{background:var(--card); border-radius:999px; padding:8px 16px; box-shadow:var(--shadow); font-weight:800; font-size:1rem; color:var(--ink);}
+.icon-btn{
+  background:var(--card); border-radius:999px; width:44px; height:44px; box-shadow:var(--shadow);
+  display:flex; align-items:center; justify-content:center; font-size:1.3rem;
+}
+.levels-grid{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:16px; width:100%; max-width:900px;
+}
+.level-card{
+  background:var(--card); border-radius:16px; padding:20px 16px; box-shadow:var(--shadow);
+  border:2px solid rgba(31,58,95,0.08); text-align:center; cursor:pointer; position:relative;
+}
+.level-card:hover{transform:translateY(-3px);}
+.level-card .emoji{font-size:2.4rem; display:block; margin-bottom:8px;}
+.level-card .name{font-weight:800; font-size:1.05rem;}
+.level-card .upload{
+  position:absolute; top:8px; right:8px; font-size:1.1rem; opacity:.55; width:30px; height:30px;
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+}
+.level-card .upload:hover{opacity:1; background:#f0ead9;}
+.level-card input[type=file]{display:none;}
+.level-card.custom-loaded{border-color:var(--correct);}
+.progress-wrap{width:100%; max-width:640px; height:14px; background:#e7e0cf; border-radius:99px; margin-bottom:28px; overflow:hidden;}
+.progress-bar{height:100%; background:var(--coral); width:0%; transition:width .3s ease;}
+.q-card{width:100%; max-width:640px;}
+.illustration{display:flex; justify-content:center; margin-bottom:14px;}
+.illustration svg{width:140px; height:auto; max-height:120px;}
+.q-statement{font-size:1.5rem; font-weight:800; text-align:center; margin-bottom:24px; line-height:1.3;}
+.level-card.teacher{border-color:var(--coral); background:#fff8f2;}
+.options{display:grid; gap:12px;}
+.opt-btn{
+  padding:16px 18px; background:#fffef9; border:2px solid #d8cdb8; border-radius:14px;
+  font-size:1.05rem; font-weight:700; text-align:left; color:var(--ink); position:relative;
+}
+.opt-btn .mark{float:right; font-size:1.2rem;}
+.opt-btn.correct{background:#e6f4ea; border-color:var(--correct); color:var(--correct-dark);}
+.opt-btn.wrong{background:#fbe8e6; border-color:var(--wrong); color:var(--wrong);}
+.opt-btn:disabled{cursor:default;}
+.end-emoji{font-size:3.5rem; text-align:center; margin-bottom:6px;}
+.stat-row{display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px dashed #d8cdb8; font-weight:700;}
+.stat-row:last-child{border-bottom:none;}
+.stat-row span.v{color:var(--coral);}
+.settings-panel{
+  position:fixed; inset:0; background:rgba(31,38,50,.45); display:none; align-items:center; justify-content:center; z-index:20; padding:20px;
+}
+.settings-panel.active{display:flex;}
+.settings-box{background:var(--card); border-radius:18px; padding:26px; max-width:380px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,.25);}
+.settings-box label{display:block; font-weight:700; margin:14px 0 6px; font-size:.95rem;}
+.row{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
+.toggle{width:46px; height:26px; background:#d8cdb8; border-radius:99px; position:relative; cursor:pointer; flex:none;}
+.toggle::after{content:""; position:absolute; width:20px; height:20px; background:#fff; border-radius:50%; top:3px; left:3px; transition:.2s;}
+.toggle.on{background:var(--correct);}
+.toggle.on::after{left:23px;}
+.file-label{
+  display:block; text-align:center; padding:10px; border:2px dashed #c9bfa6; border-radius:10px; font-weight:700; color:var(--ink-soft); cursor:pointer; margin-top:6px; font-size:.9rem;
+}
+.file-label input{display:none;}
+.footer-note{color:var(--ink-soft); font-size:.85rem; text-align:center; margin-top:18px;}
+@media (max-width:480px){
+  .title-hero{font-size:2.4rem;}
+  .q-statement{font-size:1.25rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="screen active" id="screen-login">
+  <div class="card">
+    <h1 class="title-hero">Matemáticas Jugando</h1>
+    <p class="subtitle">IES Santa Engracia · STEAM 4.0</p>
+    <input type="text" id="input-name" placeholder="Escribe tu nombre" maxlength="24">
+    <label style="font-weight:700; font-size:.9rem; color:var(--ink-soft); display:block; margin-bottom:4px;">Curso</label>
+    <select id="select-curso">
+      <option>1º ESO</option>
+      <option>2º ESO</option>
+      <option>3º ESO</option>
+      <option>4º ESO</option>
+    </select>
+    <label style="font-weight:700; font-size:.9rem; color:var(--ink-soft); display:block; margin:10px 0 4px;">Grupo</label>
+    <select id="select-grupo">
+      <option>A</option>
+      <option>B</option>
+    </select>
+    <button class="btn-primary" id="btn-continue" style="margin-top:18px;">Continuar ✏️</button>
+  </div>
+</div>
+
+<!-- LEVEL SELECT -->
+<div class="screen" id="screen-level">
+  <div class="topbar">
+    <div class="pill" id="pill-name">👤</div>
+    <div class="icon-btn" id="btn-settings-open">⚙️</div>
+  </div>
+  <h2 style="font-size:2.4rem; margin:70px 0 6px; text-align:center;">Elige un tema</h2>
+  <p class="subtitle">Toca 📄 en una tarjeta para cargar tus propias preguntas</p>
+  <div class="levels-grid" id="levels-grid"></div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="screen-game">
+  <div class="topbar">
+    <div class="icon-btn" id="btn-cancel-game" title="Cancelar y volver al menú">✕</div>
+    <div style="display:flex; gap:10px;">
+      <div class="pill" id="pill-timer">⏱ 0:00</div>
+      <div class="pill" id="pill-score">✅ 0</div>
+    </div>
+  </div>
+  <div style="height:56px;"></div>
+  <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+  <div class="q-card card">
+    <div class="illustration" id="q-illustration"></div>
+    <div class="q-statement" id="q-statement"></div>
+    <div class="options" id="q-options"></div>
+  </div>
+</div>
+
+<!-- END -->
+<div class="screen" id="screen-end">
+  <div class="card">
+    <div class="end-emoji" id="end-emoji">🎉</div>
+    <h2 style="text-align:center; font-size:2.2rem; margin:0 0 18px;">¡Terminado, <span id="end-name"></span>!</h2>
+    <div class="stat-row"><span>Curso</span><span class="v" id="end-curso"></span></div>
+    <div class="stat-row"><span>Tema</span><span class="v" id="end-topic"></span></div>
+    <div class="stat-row"><span>Aciertos</span><span class="v" id="end-correct"></span></div>
+    <div class="stat-row"><span>Fallos</span><span class="v" id="end-wrong"></span></div>
+    <div class="stat-row"><span>Tiempo total</span><span class="v" id="end-time"></span></div>
+    <button class="btn-primary" style="margin-top:20px;" id="btn-share">Compartir resultado 📤</button>
+    <button class="btn-ghost" style="width:100%; margin-top:10px;" id="btn-again">Jugar otra vez</button>
+    <button class="btn-ghost" style="width:100%;" id="btn-menu">Volver al menú</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="settings-panel" id="settings-panel">
+  <div class="settings-box">
+    <h3 style="margin:0 0 10px; font-size:1.6rem;">Ajustes 🎵</h3>
+    <div class="row">
+      <label style="margin:0;">Música</label>
+      <div class="toggle on" id="toggle-music"></div>
+    </div>
+    <label class="file-label">🎵 Cargar tu propia música (mp3)
+      <input type="file" id="input-music" accept="audio/*">
+    </label>
+    <label class="file-label" style="margin-top:10px;">🔄 Restablecer música por defecto
+    </label>
+    <button class="btn-ghost" style="width:100%; margin-top:14px;" id="btn-settings-close">Cerrar</button>
+  </div>
+</div>
+
+<script>
+/* ---------------- App height fix (mobile / WebView) ---------------- */
+function setAppHeight(){document.documentElement.style.setProperty('--app-height', window.innerHeight+'px');}
+setAppHeight(); window.addEventListener('resize', setAppHeight);
+
+/* ---------------- Question banks (formato: enunciado;op1;op2;...;opN, la correcta empieza por *) ---------------- */
+const RAW_BANKS = {
+enteros: {name:"Números enteros", emoji:"🔢", text:`
+¿Cuál es el resultado de -5 + 3?;-8;*-2;2;8
+¿Cuál es el opuesto de -7?;-7;0;*7;14
+Ordena de menor a mayor -3, 0, -1, 2: ¿cuál es el menor?;0;2;-1;*-3
+¿Cuánto es (-4) × (-3)?;-12;-7;7;*12
+¿Cuánto es 8 − 12?;20;4;*-4;-20
+¿Cuál es el valor absoluto de -9?;-9;0;*9;18
+¿Cuánto es (-6) ÷ 2?;-12;*-3;3;12
+¿Cuánto es -2 − (-5)?;-7;-3;*3;7
+¿Cuál de estos números es un entero negativo?;3;0;*-4;2.5
+¿Cuánto es (-3)²?;-9;-6;*9;6
+`},
+sumas_rectas: {name:"Sumas y rectas", emoji:"📏", text:`
+Partimos de 2 y avanzamos 5 unidades a la derecha en la recta numérica. ¿Dónde llegamos?;3;5;*7;-3
+Estamos en -3 y avanzamos 4 unidades a la derecha. ¿A qué número llegamos?;-7;0;*1;7
+¿Qué número está 3 unidades a la izquierda del 2 en la recta numérica?;5;1;*-1;-5
+¿Cuál es la distancia entre -2 y 5 en la recta numérica?;3;5;*7;10
+Partimos de 0 y retrocedemos 6 unidades. ¿Dónde llegamos?;6;0;*-6;-3
+¿Qué número está en el punto medio entre 2 y 8?;4;6;*5;3
+En la recta numérica, ¿qué número es mayor: -4 o -1?;-4;*-1;son iguales;ninguno
+Avanzamos 3 y luego retrocedemos 7 desde el 0. ¿Dónde acabamos?;10;3;*-4;-7
+¿Cuál es el siguiente número entero después de -1?;-2;1;*0;2
+¿Qué número está más cerca de 0: -2 o 3?;3;*-2;son iguales;ninguno
+`},
+fracciones: {name:"Fracciones", emoji:"🍕", text:`
+¿Cuánto es 1/2 + 1/4?;1/6;2/6;*3/4;1/8
+Simplifica la fracción 8/12;*2/3;4/6;1/2;8/12
+¿Cuál es la fracción equivalente a 2/3 con denominador 9?;4/9;5/9;*6/9;3/9
+¿Cuánto es 3/4 × 2/3?;5/7;6/12;*1/2;2/3
+¿Cuánto es 5/6 − 1/3?;1/6;2/3;*1/2;4/6
+¿Cuál es el inverso de 3/5?;-3/5;3/5;*5/3;-5/3
+¿Cuánto es 2/5 ÷ 1/2?;1/5;2/10;*4/5;5/4
+¿Qué fracción es mayor: 3/4 o 5/8?;5/8;*3/4;son iguales;ninguna
+¿Cuánto es 1 + 1/3?;1/3;3/3;*4/3;1
+¿Qué fracción representa 0.75?;1/2;2/3;*3/4;4/5
+`},
+polinomios: {name:"Polinomios", emoji:"➗", text:`
+Simplifica: 3x + 5x;8;*8x;15x;15x²
+¿Cuál es el grado del polinomio 4x³ − 2x + 1?;1;2;*3;4
+Suma (2x + 3) + (5x − 1);*7x + 2;7x + 4;3x + 2;10x + 2
+Multiplica: 3x · 2x²;*6x³;6x²;5x³;6x
+¿Cuál es el término independiente de 5x² + 3x − 7?;5;3;*-7;7
+Resta (4x² + 2x) − (x² + 5x);*3x² − 3x;3x² + 3x;5x² − 3x;3x² + 7x
+¿Cuánto es (x + 2)²?;x² + 4;*x² + 4x + 4;x² + 2x + 4;2x² + 4
+¿Cuál es el coeficiente de x en 6x² − 4x + 9?;6;9;*-4;4
+Desarrolla: 2(x + 3);2x + 3;*2x + 6;x + 6;2x + 5
+¿Cuántos términos tiene el polinomio 3x² − x + 7?;1;2;*3;4
+`},
+proporcionalidad: {name:"Proporcionalidad", emoji:"⚖️", text:`
+Si 3 kg de manzanas cuestan 6€, ¿cuánto cuestan 5 kg?;8€;9€;*10€;12€
+¿Es proporcional el dinero ganado a un sueldo fijo por hora trabajada?;No;A veces;*Sí;Depende del día
+Si 4 obreros tardan 6 días en un trabajo, ¿cuánto tardarían 8 obreros?;12 días;9 días;*3 días;6 días
+Si 2 personas necesitan 300 g de arroz, ¿cuánto necesitan 6 personas?;600 g;*900 g;450 g;1200 g
+¿Cuál es la constante de proporcionalidad si y = 4 cuando x = 2?;4;1;*2;8
+Un coche recorre 150 km en 2 horas. ¿Cuántos km recorrerá en 5 horas?;300 km;450 km;*375 km;350 km
+Si 2 litros cuestan 3€ (proporcionalidad directa), ¿cuánto cuestan 10 litros?;9€;12€;*15€;18€
+En un mapa a escala 1:100.000, 3 cm representan en la realidad;300 m;*3 km;30 km;3000 km
+Si a más trabajadores se tarda menos tiempo, la proporcionalidad es;*Inversa;Directa;Nula;Constante
+¿Cuál es el término desconocido en 3/4 = x/12?;6;*9;8;10
+`},
+ecuaciones1: {name:"Ecuaciones 1º grado", emoji:"🧮", text:`
+Resuelve: x + 5 = 12;5;6;*7;17
+Resuelve: 2x = 10;*5;10;2;20
+Resuelve: 3x − 4 = 11;*5;4;3;15
+Resuelve: x/3 = 6;2;*18;9;3
+Resuelve: 4x + 2 = 18;3;*4;5;6
+Resuelve: 2(x + 3) = 10;1;*2;4;5
+Resuelve: 5x − 3 = 2x + 9;*4;3;6;2
+Resuelve: x − 7 = -2;*5;-5;9;-9
+Resuelve: 6 − x = 2;*4;-4;8;3
+Resuelve: 3x + 1 = 4x − 5;*6;5;-6;4
+`},
+ecuaciones2: {name:"Ecuaciones 2º grado", emoji:"📐", text:`
+Resuelve: x² = 9;3;-3;*±3;9
+Resuelve: x² − 4 = 0;*±2;2;-2;4
+¿Cuál es el discriminante de x² + 2x − 3 = 0?;*16;4;-8;12
+Resuelve: x² − 5x + 6 = 0;x=1, x=6;*x=2, x=3;x=-2, x=-3;x=6, x=1
+¿Cuántas soluciones reales tiene x² + 1 = 0?;1;*Ninguna;2;Infinitas
+Resuelve: x² − x = 0;x=1;*x=0, x=1;x=0;x=-1, x=0
+¿Cuál es la fórmula general para ax² + bx + c = 0?;x = -b/a;*x = (−b ± √(b²−4ac)) / 2a;x = b² − 4ac;x = c/a
+Resuelve: x² = 16;4;-4;*±4;8
+En x² − 6x + 9 = 0, ¿cuántas soluciones distintas tiene?;0;*1 (doble);2;3
+Resuelve: 2x² − 8 = 0;*±2;2;4;±4
+`},
+trigonometria: {name:"Trigonometría", emoji:"📊", text:`
+¿Cuánto vale sen(90°)?;0;0.5;*1;-1
+¿Cuánto vale cos(0°)?;0;0.5;*1;-1
+En un triángulo rectángulo, sen(θ) = cateto opuesto / ¿qué?;cateto contiguo;*hipotenusa;cateto opuesto;ninguna
+¿Cuánto vale tan(45°)?;0;0.5;*1;2
+¿Cuánto suman los ángulos de un triángulo?;90°;*180°;270°;360°
+¿Cuánto vale sen(0°)?;*0;1;-1;0.5
+¿Qué teorema relaciona los catetos y la hipotenusa?;Tales;*Pitágoras;Euclides;Thales
+¿Cuánto vale cos(90°)?;*0;1;-1;0.5
+Si un ángulo mide 30°, ¿cuánto mide su complementario?;150°;30°;*60°;90°
+¿Cuánto vale aproximadamente sen(30°)?;1;0;*0.5;0.87
+`},
+profesor: {name:"Preguntas del Profesor", emoji:"🧑‍🏫", text:``}
+};
+
+const customBanks = {}; // topic -> raw text uploaded by user (formato ;/;* )
+let teacherParsedQuestions = null;
+const TEACHER_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYLzuA7ffXSyOWksii3_4wr_belwwnWSxu1rjHnHEPDK5oEhqiCuExYOWLRXRTXmwl0ZZPVS9hkgv_/pub?output=csv";
+
+function parseCSVText(text){
+  const rows = []; let row = [], field = '', inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){ if(text[i+1] === '"'){ field += '"'; i++; } else { inQuotes = false; } }
+      else field += c;
+    } else {
+      if(c === '"') inQuotes = true;
+      else if(c === ','){ row.push(field); field=''; }
+      else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else if(c === '\r'){ /* skip */ }
+      else field += c;
+    }
+  }
+  if(field.length>0 || row.length>0){ row.push(field); rows.push(row); }
+  return rows;
+}
+function parseTeacherCSV(text){
+  const rows = parseCSVText(text).filter(r=>r.some(c=>c.trim()!==''));
+  if(rows.length===0) return {title:'', questions:[]};
+  const title = (rows[0][0]||'').trim();
+  const questions = rows.slice(1).map(r=>{
+    const cells = r.map(c=>c.trim()).filter(c=>c!=='');
+    return {statement: cells[0], options: cells.slice(1), correctIndex: 0};
+  }).filter(q=>q.statement && q.options.length>=3);
+  return {title, questions};
+}
+const TEACHER_TXT_URL = "https://raw.githubusercontent.com/AvionZapador/matematicas-jugando/refs/heads/main/matematicas.txt";
+
+function parseQuestions(raw){
+  return raw.split('\n').map(l=>l.trim()).filter(Boolean).map(line=>{
+    const parts = line.split(';').map(p=>p.trim());
+    const statement = parts[0];
+    const rawOpts = parts.slice(1);
+    let correctIndex = rawOpts.findIndex(o=>o.startsWith('*'));
+    if(correctIndex === -1) correctIndex = 0;
+    const options = rawOpts.map(o=> o.startsWith('*') ? o.slice(1).trim() : o);
+    return {statement, options, correctIndex};
+  }).filter(q=>q.options.length>=3);
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+/* ---------------- State ---------------- */
+let playerName = "";
+let playerCurso = "";
+let playerGrupo = "";
+let currentTopicKey = null;
+let roundQuestions = [];
+let qIndex = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let startTime = 0;
+let timerInterval = null;
+let musicOn = true;
+
+/* ---------------- Screens ---------------- */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ---------------- Login ---------------- */
+document.getElementById('btn-continue').addEventListener('click', ()=>{
+  const val = document.getElementById('input-name').value.trim();
+  if(!val){ document.getElementById('input-name').focus(); return; }
+  playerName = val;
+  playerCurso = document.getElementById('select-curso').value;
+  playerGrupo = document.getElementById('select-grupo').value;
+  document.getElementById('pill-name').textContent = `👤 ${playerName} · ${playerCurso} ${playerGrupo}`;
+  buildLevelsGrid();
+  startMusic();
+  showScreen('screen-level');
+});
+document.getElementById('input-name').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') document.getElementById('btn-continue').click();
+});
+
+/* ---------------- Level select ---------------- */
+function buildLevelsGrid(){
+  const grid = document.getElementById('levels-grid');
+  grid.innerHTML = '';
+  Object.keys(RAW_BANKS).forEach(key=>{
+    const t = RAW_BANKS[key];
+    const isTeacher = key === 'profesor';
+    const card = document.createElement('div');
+    card.className = 'level-card' + (customBanks[key] ? ' custom-loaded' : '') + (isTeacher ? ' teacher' : '');
+    card.innerHTML = `
+      <div class="upload" title="${isTeacher ? 'Subir el archivo descargado de Drive (.txt)' : 'Cargar preguntas propias (.txt)'}">📄
+        <input type="file" accept=".txt" data-topic="${key}">
+      </div>
+      <span class="emoji">${t.emoji}</span>
+      <div class="name">${t.name}</div>`;
+    card.addEventListener('click', (e)=>{
+      if(e.target.closest('.upload')) return;
+      if(isTeacher) startTeacherRound(); else startRound(key);
+    });
+    const fileInput = card.querySelector('input[type=file]');
+    card.querySelector('.upload').addEventListener('click', (e)=>{ e.stopPropagation(); fileInput.click(); });
+    fileInput.addEventListener('click', e=>e.stopPropagation());
+    fileInput.addEventListener('change', e=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = ev=>{
+        customBanks[key] = ev.target.result;
+        buildLevelsGrid();
+      };
+      reader.readAsText(file);
+    });
+    grid.appendChild(card);
+  });
+}
+
+/* ---------------- Ilustraciones ---------------- */
+function pieSlicesPath(cx, cy, r, startAngle, endAngle){
+  const toXY = a => [cx + r*Math.cos(a), cy + r*Math.sin(a)];
+  const [x1,y1] = toXY(startAngle), [x2,y2] = toXY(endAngle);
+  const large = (endAngle-startAngle) > Math.PI ? 1 : 0;
+  return `M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`;
+}
+function fractionPie(num, den){
+  den = Math.max(2, Math.min(12, den||2));
+  num = Math.max(0, Math.min(den, num||1));
+  const cx=60, cy=60, r=52;
+  let paths = '';
+  const step = (2*Math.PI)/den;
+  for(let i=0;i<den;i++){
+    const a0 = -Math.PI/2 + i*step, a1 = a0+step;
+    const filled = i < num;
+    paths += `<path d="${pieSlicesPath(cx,cy,r,a0,a1)}" fill="${filled?'#e85d4c':'#fff3e6'}" stroke="#c8442f" stroke-width="1.5"/>`;
+  }
+  return `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="#8a5a34"/>${paths}</svg>`;
+}
+function buildIllustration(topicKey, statement){
+  if(topicKey === 'fracciones'){
+    const m = statement.match(/(\d+)\s*\/\s*(\d+)/);
+    if(m) return fractionPie(parseInt(m[1],10), parseInt(m[2],10));
+    return fractionPie(1,2);
+  }
+  const ICONS = {
+    enteros: `<svg viewBox="0 0 160 80"><line x1="10" y1="40" x2="150" y2="40" stroke="#1f3a5f" stroke-width="3"/>
+      ${[0,1,2,3,4,5,6].map(i=>`<line x1="${20+i*22}" y1="34" x2="${20+i*22}" y2="46" stroke="#1f3a5f" stroke-width="2"/>`).join('')}
+      <circle cx="64" cy="40" r="7" fill="#d1483f"/><circle cx="108" cy="40" r="7" fill="#4c9a6a"/>
+      <text x="30" y="65" font-size="12" fill="#4a6382">−</text><text x="130" y="65" font-size="12" fill="#4a6382">+</text></svg>`,
+    sumas_rectas: `<svg viewBox="0 0 160 80"><line x1="10" y1="45" x2="150" y2="45" stroke="#1f3a5f" stroke-width="3"/>
+      ${[0,1,2,3,4,5,6].map(i=>`<line x1="${20+i*22}" y1="39" x2="${20+i*22}" y2="51" stroke="#1f3a5f" stroke-width="2"/>`).join('')}
+      <path d="M64,45 Q86,5 108,45" stroke="#e85d4c" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+      <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#e85d4c"/></marker></defs></svg>`,
+    polinomios: `<svg viewBox="0 0 160 90"><rect x="15" y="15" width="45" height="45" fill="#e85d4c" stroke="#c8442f" stroke-width="2"/><text x="30" y="43" font-size="14" fill="#fff" font-weight="800">x²</text>
+      <rect x="70" y="35" width="45" height="25" fill="#4c9a6a" stroke="#357a4d" stroke-width="2"/><text x="85" y="53" font-size="13" fill="#fff" font-weight="800">x</text>
+      <rect x="125" y="45" width="20" height="20" fill="#f2c14e" stroke="#c99a2e" stroke-width="2"/><text x="130" y="60" font-size="12" fill="#5a4517" font-weight="800">1</text></svg>`,
+    proporcionalidad: `<svg viewBox="0 0 160 90"><line x1="80" y1="10" x2="80" y2="70" stroke="#1f3a5f" stroke-width="3"/><line x1="20" y1="30" x2="140" y2="30" stroke="#1f3a5f" stroke-width="3"/>
+      <line x1="20" y1="30" x2="20" y2="50" stroke="#1f3a5f" stroke-width="2"/><path d="M5,50 Q20,68 35,50" fill="none" stroke="#1f3a5f" stroke-width="2"/>
+      <line x1="140" y1="30" x2="140" y2="50" stroke="#1f3a5f" stroke-width="2"/><path d="M125,50 Q140,68 155,50" fill="none" stroke="#1f3a5f" stroke-width="2"/>
+      <rect x="70" y="70" width="20" height="10" fill="#4a6382"/></svg>`,
+    ecuaciones1: `<svg viewBox="0 0 160 90"><line x1="80" y1="10" x2="80" y2="70" stroke="#1f3a5f" stroke-width="3"/><line x1="20" y1="30" x2="140" y2="30" stroke="#1f3a5f" stroke-width="3"/>
+      <line x1="20" y1="30" x2="20" y2="48" stroke="#1f3a5f" stroke-width="2"/><path d="M5,48 Q20,64 35,48" fill="none" stroke="#1f3a5f" stroke-width="2"/><text x="12" y="43" font-size="16" font-weight="800" fill="#e85d4c">x</text>
+      <line x1="140" y1="30" x2="140" y2="48" stroke="#1f3a5f" stroke-width="2"/><path d="M125,48 Q140,64 155,48" fill="none" stroke="#1f3a5f" stroke-width="2"/><text x="132" y="43" font-size="14" font-weight="800" fill="#4c9a6a">5</text>
+      <rect x="70" y="70" width="20" height="10" fill="#4a6382"/></svg>`,
+    ecuaciones2: `<svg viewBox="0 0 160 90"><line x1="10" y1="70" x2="150" y2="70" stroke="#1f3a5f" stroke-width="2"/><line x1="80" y1="10" x2="80" y2="80" stroke="#1f3a5f" stroke-width="2"/>
+      <path d="M20,20 Q80,90 140,20" stroke="#e85d4c" stroke-width="3" fill="none"/>
+      <circle cx="50" cy="70" r="4" fill="#4c9a6a"/><circle cx="110" cy="70" r="4" fill="#4c9a6a"/></svg>`,
+    trigonometria: `<svg viewBox="0 0 160 90"><polygon points="20,80 140,80 140,20" fill="#fff3e6" stroke="#1f3a5f" stroke-width="2.5"/>
+      <path d="M40,80 A20,20 0 0 1 34,64" fill="none" stroke="#e85d4c" stroke-width="2"/><text x="44" y="70" font-size="12" fill="#e85d4c" font-weight="800">θ</text>
+      <text x="75" y="93" font-size="10" fill="#4a6382">cateto</text><text x="145" y="55" font-size="10" fill="#4a6382" transform="rotate(90 145 55)">cateto</text>
+      <text x="65" y="45" font-size="10" fill="#4a6382">hipotenusa</text></svg>`,
+    profesor: `<svg viewBox="0 0 160 90"><circle cx="80" cy="30" r="18" fill="#f2c14e"/><rect x="45" y="52" width="70" height="34" rx="10" fill="#4a6382"/><text x="60" y="76" font-size="24">🧑‍🏫</text></svg>`
+  };
+  return ICONS[topicKey] || '';
+}
+
+/* ---------------- Preguntas del Profesor (Google Drive) ---------------- */
+async function startTeacherRound(){
+  try{
+    const res = await fetch(TEACHER_CSV_URL, {cache:'no-store'});
+    if(!res.ok) throw new Error('bad status');
+    const text = await res.text();
+    const {title, questions} = parseTeacherCSV(text);
+    if(!questions.length) throw new Error('empty');
+    teacherParsedQuestions = questions;
+    RAW_BANKS.profesor.name = title || "Preguntas del Profesor";
+    buildLevelsGrid();
+    startRound('profesor');
+  }catch(err){
+    if(customBanks['profesor']){ startRound('profesor'); return; }
+    alert(
+      'No se han podido cargar las preguntas del profesor desde Google Sheets ahora mismo ' +
+      '(revisa la conexión o que la hoja siga compartida como "Cualquier persona con el enlace: Lector").\n\n' +
+      'Como alternativa, puedes subir un archivo .txt con el formato habitual (enunciado;opción1;opción2;...;*correcta) ' +
+      'pulsando el icono 📄 de esta tarjeta.'
+    );
+  }
+}
+
+/* ---------------- Game ---------------- */
+function startRound(topicKey){
+  currentTopicKey = topicKey;
+  let parsed;
+  if(topicKey === 'profesor' && teacherParsedQuestions && teacherParsedQuestions.length){
+    parsed = teacherParsedQuestions;
+  } else {
+    const raw = customBanks[topicKey] || RAW_BANKS[topicKey].text;
+    parsed = parseQuestions(raw);
+  }
+  let all = shuffle(parsed);
+  roundQuestions = all.map(q=>{
+    const opts = q.options.map((text,i)=>({text, isCorrect: i===q.correctIndex}));
+    return {statement:q.statement, options: shuffle(opts)};
+  });
+  qIndex = 0; correctCount = 0; wrongCount = 0;
+  startTime = Date.now();
+  document.getElementById('pill-score').textContent = '✅ 0';
+  clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimer, 250);
+  showScreen('screen-game');
+  renderQuestion();
+}
+
+function updateTimer(){
+  const s = Math.floor((Date.now()-startTime)/1000);
+  const m = Math.floor(s/60), sec = s%60;
+  document.getElementById('pill-timer').textContent = `⏱ ${m}:${sec.toString().padStart(2,'0')}`;
+}
+
+function renderQuestion(){
+  const q = roundQuestions[qIndex];
+  document.getElementById('progress-bar').style.width = (qIndex/roundQuestions.length*100)+'%';
+  document.getElementById('q-statement').textContent = q.statement;
+  document.getElementById('q-illustration').innerHTML = buildIllustration(currentTopicKey, q.statement);
+  const wrap = document.getElementById('q-options');
+  wrap.innerHTML = '';
+  q.options.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = opt.text;
+    btn.addEventListener('click', ()=>answer(opt, btn));
+    wrap.appendChild(btn);
+  });
+}
+
+function answer(opt, btnEl){
+  const buttons = document.querySelectorAll('#q-options .opt-btn');
+  buttons.forEach(b=>b.disabled = true);
+  if(opt.isCorrect){
+    btnEl.classList.add('correct');
+    btnEl.innerHTML += '<span class="mark">✔️</span>';
+    correctCount++;
+    playTone(true);
+  } else {
+    btnEl.classList.add('wrong');
+    btnEl.innerHTML += '<span class="mark">✘</span>';
+    wrongCount++;
+    playTone(false);
+    buttons.forEach(b=>{
+      if(b.textContent.trim() === roundQuestions[qIndex].options.find(o=>o.isCorrect).text){
+        b.classList.add('correct');
+      }
+    });
+  }
+  document.getElementById('pill-score').textContent = '✅ ' + correctCount;
+  setTimeout(()=>{
+    qIndex++;
+    if(qIndex >= roundQuestions.length){ finishRound(); }
+    else { renderQuestion(); }
+  }, 950);
+}
+
+function finishRound(){
+  clearInterval(timerInterval);
+  document.getElementById('progress-bar').style.width = '100%';
+  const totalSec = Math.floor((Date.now()-startTime)/1000);
+  const m = Math.floor(totalSec/60), s = totalSec%60;
+  const timeStr = `${m}:${s.toString().padStart(2,'0')}`;
+  document.getElementById('end-name').textContent = playerName;
+  document.getElementById('end-curso').textContent = `${playerCurso} ${playerGrupo}`;
+  document.getElementById('end-topic').textContent = RAW_BANKS[currentTopicKey].name;
+  document.getElementById('end-correct').textContent = correctCount + ' / ' + roundQuestions.length;
+  document.getElementById('end-wrong').textContent = wrongCount;
+  document.getElementById('end-time').textContent = timeStr;
+  document.getElementById('end-emoji').textContent = correctCount === roundQuestions.length ? '🏆' : (correctCount >= roundQuestions.length/2 ? '🎉' : '💪');
+  window._shareText = `${playerName} (${playerCurso} ${playerGrupo}) ha completado "${RAW_BANKS[currentTopicKey].name}" en Matemáticas Jugando: ${correctCount}/${roundQuestions.length} aciertos en ${timeStr}. #IESSantaEngracia`;
+  showScreen('screen-end');
+}
+
+document.getElementById('btn-cancel-game').addEventListener('click', ()=>{
+  if(confirm('¿Seguro que quieres cancelar la partida y volver al menú?')){
+    clearInterval(timerInterval);
+    showScreen('screen-level');
+  }
+});
+document.getElementById('btn-again').addEventListener('click', ()=> startRound(currentTopicKey));
+document.getElementById('btn-menu').addEventListener('click', ()=> showScreen('screen-level'));
+document.getElementById('btn-share').addEventListener('click', async ()=>{
+  const text = window._shareText || '';
+  if(navigator.share){
+    try{ await navigator.share({text}); }catch(e){}
+  } else {
+    try{
+      await navigator.clipboard.writeText(text);
+      alert('Resultado copiado al portapapeles ✅');
+    }catch(e){ alert(text); }
+  }
+});
+
+/* ---------------- Settings ---------------- */
+document.getElementById('btn-settings-open').addEventListener('click', ()=> document.getElementById('settings-panel').classList.add('active'));
+document.getElementById('btn-settings-close').addEventListener('click', ()=> document.getElementById('settings-panel').classList.remove('active'));
+document.getElementById('toggle-music').addEventListener('click', function(){
+  musicOn = !musicOn;
+  this.classList.toggle('on', musicOn);
+  if(musicOn) startMusic(); else stopMusic();
+});
+document.getElementById('input-music').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  stopMusic();
+  const url = URL.createObjectURL(file);
+  customAudio = new Audio(url);
+  customAudio.loop = true;
+  if(musicOn) customAudio.play().catch(()=>{});
+});
+
+/* ---------------- Music: simple procedural 8-bit melody + optional custom mp3 ---------------- */
+let audioCtx = null;
+let customAudio = null;
+let melodyTimeouts = [];
+const MELODY = [
+  ['C5',.25],['E5',.25],['G5',.25],['E5',.25],
+  ['A5',.25],['G5',.25],['E5',.25],['C5',.25],
+  ['D5',.25],['F5',.25],['A5',.25],['F5',.25],
+  ['G5',.5]
+];
+const NOTE_FREQ = {C5:523.25,D5:587.33,E5:659.25,F5:698.46,G5:783.99,A5:880.0,B5:987.77};
+
+function playMelodyLoop(){
+  if(!musicOn || customAudio) return;
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  let t = audioCtx.currentTime;
+  melodyTimeouts.forEach(clearTimeout); melodyTimeouts = [];
+  let cursor = 0;
+  MELODY.forEach(([note,dur])=>{
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = NOTE_FREQ[note];
+    gain.gain.setValueAtTime(0.05, t+cursor);
+    gain.gain.exponentialRampToValueAtTime(0.001, t+cursor+dur*0.9);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t+cursor);
+    osc.stop(t+cursor+dur);
+    cursor += dur;
+  });
+  const totalDur = MELODY.reduce((a,[,d])=>a+d,0);
+  melodyTimeouts.push(setTimeout(playMelodyLoop, totalDur*1000));
+}
+function startMusic(){
+  if(!musicOn) return;
+  if(customAudio){ customAudio.play().catch(()=>{}); return; }
+  try{ playMelodyLoop(); }catch(e){}
+}
+function stopMusic(){
+  melodyTimeouts.forEach(clearTimeout); melodyTimeouts = [];
+  if(customAudio) customAudio.pause();
+}
+function playTone(good){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = good ? 880 : 220;
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.3);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime+0.3);
+  }catch(e){}
+}
+</script>
+</body>
+</html>
