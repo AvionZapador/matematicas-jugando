@@ -111,6 +111,7 @@ button:active{transform:translateY(2px);}
 .q-card{width:100%; max-width:640px;}
 .illustration{display:flex; justify-content:center; margin-bottom:14px;}
 .illustration svg{width:140px; height:auto; max-height:120px;}
+.illustration img{max-width:100%; max-height:180px; border-radius:12px; box-shadow:var(--shadow);}
 .q-statement{font-size:1.5rem; font-weight:800; text-align:center; margin-bottom:24px; line-height:1.3;}
 .level-card.teacher{border-color:var(--coral); background:#fff8f2;}
 .options{display:grid; gap:12px;}
@@ -367,8 +368,16 @@ function parseTeacherCSV(text){
   if(rows.length===0) return {title:'', questions:[]};
   const title = (rows[0][0]||'').trim();
   const questions = rows.slice(1).map(r=>{
-    const cells = r.map(c=>c.trim()).filter(c=>c!=='');
-    return {statement: cells[0], options: cells.slice(1), correctIndex: 0};
+    let cells = r.map(c=>c.trim());
+    while(cells.length && cells[cells.length-1] === '') cells.pop();
+    let imageUrl = '';
+    const last = cells[cells.length-1] || '';
+    if(/^https?:\/\//i.test(last)){
+      imageUrl = last;
+      cells = cells.slice(0, -1);
+    }
+    const nonEmpty = cells.filter(c=>c!=='');
+    return {statement: nonEmpty[0], options: nonEmpty.slice(1), correctIndex: 0, imageUrl};
   }).filter(q=>q.statement && q.options.length>=3);
   return {title, questions};
 }
@@ -467,6 +476,10 @@ function buildLevelsGrid(){
 }
 
 /* ---------------- Ilustraciones ---------------- */
+window.__imgFallback = function(img){
+  const q = roundQuestions[qIndex];
+  if(img && img.parentElement) img.parentElement.innerHTML = buildIllustration(currentTopicKey, q ? q.statement : '');
+};
 function pieSlicesPath(cx, cy, r, startAngle, endAngle){
   const toXY = a => [cx + r*Math.cos(a), cy + r*Math.sin(a)];
   const [x1,y1] = toXY(startAngle), [x2,y2] = toXY(endAngle);
@@ -560,7 +573,7 @@ function startRound(topicKey){
   let all = shuffle(parsed);
   roundQuestions = all.map(q=>{
     const opts = q.options.map((text,i)=>({text, isCorrect: i===q.correctIndex}));
-    return {statement:q.statement, options: shuffle(opts)};
+    return {statement:q.statement, options: shuffle(opts), imageUrl: q.imageUrl || ''};
   });
   qIndex = 0; correctCount = 0; wrongCount = 0;
   startTime = Date.now();
@@ -581,7 +594,9 @@ function renderQuestion(){
   const q = roundQuestions[qIndex];
   document.getElementById('progress-bar').style.width = (qIndex/roundQuestions.length*100)+'%';
   document.getElementById('q-statement').textContent = q.statement;
-  document.getElementById('q-illustration').innerHTML = buildIllustration(currentTopicKey, q.statement);
+  document.getElementById('q-illustration').innerHTML = q.imageUrl
+    ? `<img src="${q.imageUrl}" alt="" onerror="window.__imgFallback(this)">`
+    : buildIllustration(currentTopicKey, q.statement);
   const wrap = document.getElementById('q-options');
   wrap.innerHTML = '';
   q.options.forEach(opt=>{
@@ -645,7 +660,26 @@ document.getElementById('btn-cancel-game').addEventListener('click', ()=>{
 });
 document.getElementById('btn-again').addEventListener('click', ()=> startRound(currentTopicKey));
 document.getElementById('btn-menu').addEventListener('click', ()=> showScreen('screen-level'));
+const SCORES_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxoZE8kjHnmAyXfKsVbVg2ZybN2zJz_8EltavqEojvm1BZO2Qz74RSv0bDEm8BrZOjThQ/exec";
+
+async function logResultToSheet(){
+  if(!SCORES_WEBAPP_URL || SCORES_WEBAPP_URL.indexOf('PON_AQUI') === 0) return;
+  try{
+    const payload = {
+      nombre: playerName,
+      curso: playerCurso,
+      grupo: playerGrupo,
+      fecha: new Date().toLocaleString('es-ES'),
+      tema: RAW_BANKS[currentTopicKey].name,
+      resultado: `${correctCount}/${roundQuestions.length}`,
+      tiempo: document.getElementById('end-time').textContent
+    };
+    await fetch(SCORES_WEBAPP_URL, { method:'POST', body: JSON.stringify(payload) });
+  }catch(err){ /* no bloquear el compartir si falla el registro */ }
+}
+
 document.getElementById('btn-share').addEventListener('click', async ()=>{
+  logResultToSheet();
   const text = window._shareText || '';
   if(navigator.share){
     try{ await navigator.share({text}); }catch(e){}
