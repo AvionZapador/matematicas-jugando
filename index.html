@@ -236,7 +236,7 @@ button:active{transform:translateY(2px);}
     <div class="stat-row"><span>Aciertos</span><span class="v" id="end-correct"></span></div>
     <div class="stat-row"><span>Fallos</span><span class="v" id="end-wrong"></span></div>
     <div class="stat-row"><span>Tiempo total</span><span class="v" id="end-time"></span></div>
-    <button class="btn-primary" style="margin-top:20px;" id="btn-share">Compartir resultado 📤</button>
+    <button class="btn-primary" style="margin-top:20px;" id="btn-share">Registrar y Enviar Resultado 📤</button>
     <button class="btn-ghost" style="width:100%; margin-top:10px;" id="btn-again">Jugar otra vez</button>
     <button class="btn-ghost" style="width:100%;" id="btn-menu">Volver al menú</button>
   </div>
@@ -377,6 +377,25 @@ profesor: {name:"Preguntas del Profesor", emoji:"🧑‍🏫", text:``}
 
 const customBanks = {}; // topic -> raw text uploaded by user (formato ;/;* )
 let teacherParsedQuestions = null;
+
+/* ---------------- Identificador persistente de dispositivo/navegador ----------------
+   No existe forma de leer la MAC real desde una web ni desde una app normal de Android
+   (bloqueado por el propio sistema desde hace años). Como alternativa práctica, se genera
+   un identificador aleatorio la primera vez que se usa la app en ese dispositivo/navegador
+   y se reutiliza siempre — útil para detectar que el mismo aparato registra resultados con
+   varios nombres distintos. Se pierde si se borran los datos del navegador/app. */
+function getDeviceId(){
+  try{
+    let id = localStorage.getItem('mj_device_id');
+    if(!id){
+      id = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem('mj_device_id', id);
+    }
+    return id;
+  }catch(e){
+    return 'sin-almacenamiento';
+  }
+}
 const TEACHER_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYLzuA7ffXSyOWksii3_4wr_belwwnWSxu1rjHnHEPDK5oEhqiCuExYOWLRXRTXmwl0ZZPVS9hkgv_/pub?output=csv";
 
 function parseCSVText(text){
@@ -706,7 +725,8 @@ async function logResultToSheet(){
       fecha: new Date().toLocaleString('es-ES'),
       tema: RAW_BANKS[currentTopicKey].name,
       resultado: `${correctCount}/${roundQuestions.length}`,
-      tiempo: document.getElementById('end-time').textContent
+      tiempo: document.getElementById('end-time').textContent,
+      dispositivo: getDeviceId()
     };
     await fetch(SCORES_WEBAPP_URL, { method:'POST', body: JSON.stringify(payload) });
   }catch(err){ /* no bloquear el compartir si falla el registro */ }
